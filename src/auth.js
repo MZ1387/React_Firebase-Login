@@ -23,6 +23,7 @@ class Auth extends Component {
     this.login = this.login.bind(this);
     this.signUp = this.signUp.bind(this);
     this.logout = this.logout.bind(this);
+    this.google = this.google.bind(this);
   }
 
   login(event) {
@@ -54,7 +55,7 @@ class Auth extends Component {
 
     promise
     .then(user => {
-      var message = `Welcome ${user.email}`;
+      var message = `Welcome, ${user.email}`;
 
       firebase.database().ref(`/users/${user.uid}`).set({
         email: user.email
@@ -69,13 +70,33 @@ class Auth extends Component {
   }
 
   logout() {
-
     firebase.auth().signOut()
     .then(function() {
       console.log('Logged Out');
     })
     .catch(function(error) {
       console.log(error);
+    });
+  }
+
+  google() {
+    var provider = new firebase.auth.GoogleAuthProvider();
+    var promise = firebase.auth().signInWithPopup(provider);
+
+    promise
+    .then(result => {
+      var user = result.user;
+      var message = `Welcome, ${user.displayName}`;
+
+      firebase.database().ref(`users/${user.uid}`).set({
+        email: user.email,
+        name: user.displayName
+      });
+      this.setState({ message });
+    })
+    .catch(error => {
+      var message = error.message;
+      console.log(message);
     });
   }
 
@@ -87,7 +108,8 @@ class Auth extends Component {
         <p>{this.state.message}</p>
         <button onClick={this.login}>Login</button>
         <button onClick={this.signUp}>Sign Up</button>
-        <button id='logout' className='hide' onClick={this.logout}>Logout</button>
+        <button id='logout' className='hide' onClick={this.logout}>Logout</button><br />
+        <button onClick={this.google}>Sign In with Google</button>
       </div>
     );
   }
